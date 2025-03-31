@@ -11,7 +11,6 @@
     "server:prod": "node src/server/start.js",
     "start:dev": "npm run killport && npm run build && npm run server:dev",
     "start:prod": "npm run killport && npm run build && npm run server:prod",
-    "start": "npm run build && npm run server:prod",
     "killport": "npx kill-port 3000"
   },
   "dependencies": {

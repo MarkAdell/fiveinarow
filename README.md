@@ -17,6 +17,9 @@ npm run dev
 
 # In another terminal, run the game server with auto-restart
 npm run server:dev
+
+# Alternatively, you can serve it directly from the server
+npm run start:dev 
 ```
 
 ## Production
