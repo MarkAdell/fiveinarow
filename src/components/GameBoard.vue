@@ -372,7 +372,6 @@ function isWinningCell(row, col) {
               >
                 O
               </span>
-              <span v-else-if="gameStatus === 'playing' && isMyTurn" class="hover-indicator"></span>
             </div>
           </template>
         </div>
@@ -389,9 +388,9 @@ function isWinningCell(row, col) {
 }
 
 .board-grid {
-  grid-template-columns: repeat(15, minmax(2vw, 1fr));
+  grid-template-columns: repeat(15, minmax(1.5vw, 1fr));
   background-color: #d9b38c;
-  padding: 8px;
+  padding: 4px;
   border-radius: 4px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
@@ -402,8 +401,12 @@ function isWinningCell(row, col) {
 }
 
 .board-cell {
-  width: 5vw;
-  height: 5vw;
+  width: 2.8vw;
+  height: 2.8vw;
+  max-width: 30px;
+  max-height: 30px;
+  min-width: 20px;
+  min-height: 20px;
   background-color: #e9c497;
   display: flex;
   align-items: center;
@@ -415,8 +418,10 @@ function isWinningCell(row, col) {
 
 @media (min-width: 640px) {
   .board-cell {
-    width: 4vw;
-    height: 4vw;
+    width: 3vw;
+    height: 3vw;
+    max-width: 40px;
+    max-height: 40px;
   }
 }
 
@@ -475,7 +480,7 @@ function isWinningCell(row, col) {
 
 @media (min-width: 640px) {
   .mark {
-    font-size: 40px;
+    font-size: 25px;
   }
 }
 
@@ -489,19 +494,6 @@ function isWinningCell(row, col) {
 
 .o-mark {
   color: #c53030;
-}
-
-.hover-indicator {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.1);
-  opacity: 0;
-}
-
-.playable:hover .hover-indicator {
-  opacity: 1;
 }
 
 @keyframes pulse {
