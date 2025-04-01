@@ -234,7 +234,7 @@ function isWinningCell(row, col) {
   <div>
     <div class="mb-3 sm:mb-4 bg-white p-3 sm:p-6 rounded-lg shadow-lg">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 sm:mb-4 gap-2 sm:gap-4">
-        <div>
+        <div class="w-full flex flex-col items-center">
           <h2 class="text-base sm:text-xl font-bold flex items-center">
             <span class="mr-1 sm:mr-2">Room:</span> 
             <div class="relative flex items-center">
@@ -282,22 +282,10 @@ function isWinningCell(row, col) {
             </div>
           </h2>
         </div>
-        
-        <div class="flex space-x-3">
-          <button 
-            @click="leaveGame" 
-            class="btn btn-secondary text-xs sm:text-sm flex items-center gap-1 py-1 sm:py-2 px-2 sm:px-3"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Leave
-          </button>
-        </div>
       </div>
       
       <div class="flex flex-col sm:flex-row justify-between items-center">
-        <div class="text-sm sm:text-lg font-medium px-2 sm:px-4 py-1 sm:py-2 rounded-lg bg-gray-50 w-full sm:w-auto text-center">
+        <div class="text-sm sm:text-lg font-medium px-2 sm:px-4 py-1 sm:py-2 rounded-lg bg-gray-50 w-full mx-auto sm:mx-0 sm:w-auto text-center mb-2 sm:mb-0 max-w-xs sm:max-w-none">
           {{ statusMessage }}
         </div>
         
@@ -313,6 +301,16 @@ function isWinningCell(row, col) {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             Play Again
+          </button>
+          
+          <button 
+            @click="leaveGame" 
+            class="btn btn-secondary text-xs sm:text-sm flex items-center gap-1 py-1 sm:py-2 px-2 sm:px-3"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Leave
           </button>
           
           <!-- Show "Waiting" indicator when player is ready but opponent is not -->
