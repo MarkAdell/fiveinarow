@@ -54,6 +54,30 @@ onMounted(() => {
 
   setupSocketListeners();
   
+  // Setup page visibility event listener to help maintain connection
+  let heartbeatInterval;
+  
+  // Use a heartbeat strategy when in background
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      
+      heartbeatInterval = setInterval(() => {
+        if (socket.connected) {
+          socket.emit('heartbeat', { roomId: props.roomId });
+        } else {
+          socket.connect();
+        }
+      }, 3000);
+    } else {
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
+    }
+  });
+  
   // Clean up socket listeners when component is unmounted
   return () => {
     socket.off('opponentJoined');
@@ -63,6 +87,12 @@ onMounted(() => {
     socket.off('gameReset');
     socket.off('opponentLeft');
     socket.off('playerReady');
+  
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+    }
+    
+    document.removeEventListener('visibilitychange', () => {});
   };
 });
 

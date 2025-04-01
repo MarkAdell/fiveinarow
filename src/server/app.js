@@ -31,39 +31,36 @@ const io = new Server(server, {
 
 initDatabase();
 
-// Constants
-const INACTIVITY_TIMEOUT_MS = 300000; // 5 minutes
-
 // Track last activity time for each player
 const playerLastActivity = new Map(); // socketId -> timestamp
 
-// Setup a regular check for inactive players
-setInterval(() => {
-  const now = Date.now();
-  const inactiveSockets = [];
+// Disconnect inactive players after 5 minutes
+function setupInactivityCheck() {
+  const INACTIVITY_TIMEOUT_MS = 300000;
 
-  // Find inactive players
-  playerLastActivity.forEach((lastActivityTime, socketId) => {
-    if (now - lastActivityTime > INACTIVITY_TIMEOUT_MS) {
-      inactiveSockets.push(socketId);
-    }
-  });
+  setInterval(() => {
+    const now = Date.now();
+    const inactiveSockets = [];
 
-  // Disconnect inactive players
-  inactiveSockets.forEach((socketId) => {
-    const socket = io.sockets.sockets.get(socketId);
-    if (socket) {
-      console.log(
-        `Disconnecting player ${socketId} due to inactivity (5+ minutes)`
-      );
-      socket.disconnect(true);
-      playerLastActivity.delete(socketId);
-    } else {
-      // Socket no longer exists, just clean up
-      playerLastActivity.delete(socketId);
-    }
-  });
-}, 60000); // Check every minute
+    playerLastActivity.forEach((lastActivityTime, socketId) => {
+      if (now - lastActivityTime > INACTIVITY_TIMEOUT_MS) {
+        inactiveSockets.push(socketId);
+      }
+    });
+
+    inactiveSockets.forEach((socketId) => {
+      const socket = io.sockets.sockets.get(socketId);
+      if (socket) {
+        socket.disconnect(true);
+        playerLastActivity.delete(socketId);
+      } else {
+        playerLastActivity.delete(socketId);
+      }
+    });
+  }, 60000);
+}
+
+setupInactivityCheck();
 
 // Function to get client IP address from various headers
 function getClientIp(socket) {
@@ -109,6 +106,23 @@ io.on("connection", async (socket) => {
     socketId: socket.id,
     ipAddress: clientIp,
     userAgent,
+  });
+
+  // Heartbeat handler for all devices
+  socket.on("heartbeat", ({ roomId }) => {
+    // Update last activity time
+    playerLastActivity.set(socket.id, Date.now());
+
+    // Actively refresh the room connection
+    if (roomId) {
+      const room = roomManager.getRoom(roomId);
+      if (room) {
+        socket.join(roomId);
+
+        // Send a minimal response to keep the connection active
+        socket.emit("heartbeatAck");
+      }
+    }
   });
 
   // For all other events, update the activity timestamp
