@@ -60,8 +60,8 @@ export async function getGameStats() {
   try {
     const result = await sql`
       SELECT
-        COUNT(DISTINCT room_id) AS total_games,
-        COUNT(DISTINCT socket_id) AS total_players,
+        COUNT(DISTINCT room_id) AS total_rooms,
+        COUNT(DISTINCT ip_address) AS total_players,
         (
           SELECT COUNT(*)
           FROM game_events

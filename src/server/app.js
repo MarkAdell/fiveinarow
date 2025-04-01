@@ -7,15 +7,18 @@ import { dirname, join } from "path";
 import dotenv from "dotenv";
 import * as roomManager from "./RoomManager.js";
 import { initDatabase, eventRepository } from "./db/index.js";
+import { authenticateApiKey } from "./middlewares/api-key-auth.js";
 
 dotenv.config();
+
+const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const app = express();
-
 app.use(cors());
+
+app.use(express.static(join(__dirname, "../../dist")));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -179,7 +182,11 @@ io.on("connection", async (socket) => {
         ipAddress: clientIp,
         userAgent,
         details: {
-          score: room.players[0].score, // getting any because score is the same for both players
+          players: room.players.map((p) => ({
+            id: p.id,
+            mark: p.mark,
+            score: p.score,
+          })),
         },
       });
 
@@ -244,7 +251,11 @@ io.on("connection", async (socket) => {
         ipAddress: clientIp,
         userAgent,
         details: {
-          score: room.players[0].score, // getting any because score is the same for both players
+          players: room.players.map((p) => ({
+            id: p.id,
+            mark: p.mark,
+            score: p.score,
+          })),
         },
       });
 
@@ -295,7 +306,11 @@ async function handlePlayerLeaving(socket, roomId, ipAddress, userAgent) {
     ipAddress,
     userAgent,
     details: {
-      score: room.players[0].score, // getting any because score is the same for both players
+      players: room.players.map((p) => ({
+        id: p.id,
+        mark: p.mark,
+        score: p.score,
+      })),
     },
   });
 
@@ -303,7 +318,6 @@ async function handlePlayerLeaving(socket, roomId, ipAddress, userAgent) {
 
   io.to(roomId).emit("opponentLeft");
 
-  // Force all remaining players to leave the room
   room.players.forEach((player) => {
     if (player.id !== socket.id) {
       const playerSocket = io.sockets.sockets.get(player.id);
@@ -316,8 +330,7 @@ async function handlePlayerLeaving(socket, roomId, ipAddress, userAgent) {
   roomManager.removeRoom(roomId);
 }
 
-// Basic analytics endpoint
-app.get("/api/stats", async (req, res) => {
+app.get("/api/stats", authenticateApiKey, async (req, res) => {
   try {
     const stats = await eventRepository.getGameStats();
     res.json(stats);
@@ -327,9 +340,6 @@ app.get("/api/stats", async (req, res) => {
   }
 });
 
-app.use(express.static(join(__dirname, "../../dist")));
-
-// Handle SPA routing - always return index.html for any route
 app.get("*", (req, res) => {
   res.sendFile(join(__dirname, "../../dist", "index.html"));
 });

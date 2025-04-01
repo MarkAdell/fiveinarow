@@ -13,7 +13,7 @@ function createSafeQueryExecutor(queryFn) {
     try {
       return { result: await queryFn(...args), success: true };
     } catch (error) {
-      return { result: [], success: false };
+      return { result: [], success: false, error: error.message };
     }
   };
 }
