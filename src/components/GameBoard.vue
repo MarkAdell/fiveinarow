@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, inject, computed } from 'vue';
 
+const BOARD_SIZE = 13;
+
 const props = defineProps({
   roomId: String,
   playerMark: String,
@@ -10,7 +12,7 @@ const props = defineProps({
 const emit = defineEmits(['leaveGame', 'opponentLeft']);
 const socket = inject('socket');
 
-const board = ref(Array(13).fill().map(() => Array(13).fill(null)));
+const board = ref(Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null)));
 const currentTurn = ref('');
 const gameStatus = ref('waiting');
 const players = ref([]);
@@ -386,7 +388,7 @@ function isWinningCell(row, col) {
 }
 
 .board-grid {
-  grid-template-columns: repeat(13, minmax(1.5vw, 1fr));
+  grid-template-columns: repeat(v-bind(BOARD_SIZE), minmax(1.5vw, 1fr));
   background-color: #d9b38c;
   padding: 4px;
   border-radius: 4px;
