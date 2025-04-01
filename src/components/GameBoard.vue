@@ -399,8 +399,8 @@ function isWinningCell(row, col) {
 }
 
 .board-cell {
-  width: 2.8vw;
-  height: 2.8vw;
+  width: 6vw;
+  height: 6vw;
   max-width: 30px;
   max-height: 30px;
   min-width: 20px;
