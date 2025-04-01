@@ -366,6 +366,13 @@ function isWinningCell(row, col) {
               >
                 O
               </span>
+              <span 
+                v-else-if="cell === null && gameStatus === 'playing' && isMyTurn" 
+                class="mark hover-mark"
+                :class="{'x-mark': playerMark === 'X', 'o-mark': playerMark === 'O'}"
+              >
+                {{ playerMark }}
+              </span>
             </div>
           </template>
         </div>
@@ -501,5 +508,14 @@ function isWinningCell(row, col) {
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.hover-mark {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.playable:hover .hover-mark {
+  opacity: 0.3;
 }
 </style> 
