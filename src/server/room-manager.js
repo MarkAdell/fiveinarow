@@ -1,7 +1,5 @@
-// Constants
 const BOARD_SIZE = 13;
 
-// Shared state
 const rooms = new Map();
 
 function createEmptyBoard() {

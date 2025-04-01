@@ -5,7 +5,7 @@ import cors from "cors";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import dotenv from "dotenv";
-import * as roomManager from "./RoomManager.js";
+import * as roomManager from "./room-manager.js";
 import { initDatabase, eventRepository } from "./db/index.js";
 import { authenticateApiKey } from "./middlewares/api-key-auth.js";
 
@@ -30,6 +30,40 @@ const io = new Server(server, {
 });
 
 initDatabase();
+
+// Constants
+const INACTIVITY_TIMEOUT_MS = 300000; // 5 minutes
+
+// Track last activity time for each player
+const playerLastActivity = new Map(); // socketId -> timestamp
+
+// Setup a regular check for inactive players
+setInterval(() => {
+  const now = Date.now();
+  const inactiveSockets = [];
+
+  // Find inactive players
+  playerLastActivity.forEach((lastActivityTime, socketId) => {
+    if (now - lastActivityTime > INACTIVITY_TIMEOUT_MS) {
+      inactiveSockets.push(socketId);
+    }
+  });
+
+  // Disconnect inactive players
+  inactiveSockets.forEach((socketId) => {
+    const socket = io.sockets.sockets.get(socketId);
+    if (socket) {
+      console.log(
+        `Disconnecting player ${socketId} due to inactivity (5+ minutes)`
+      );
+      socket.disconnect(true);
+      playerLastActivity.delete(socketId);
+    } else {
+      // Socket no longer exists, just clean up
+      playerLastActivity.delete(socketId);
+    }
+  });
+}, 60000); // Check every minute
 
 // Function to get client IP address from various headers
 function getClientIp(socket) {
@@ -67,12 +101,25 @@ io.on("connection", async (socket) => {
   const clientIp = getClientIp(socket);
   const userAgent = socket.handshake.headers["user-agent"];
 
+  // Record initial activity time
+  playerLastActivity.set(socket.id, Date.now());
+
   eventRepository.logEvent({
     eventType: "connection",
     socketId: socket.id,
     ipAddress: clientIp,
     userAgent,
   });
+
+  // For all other events, update the activity timestamp
+  ["createRoom", "joinRoom", "makeMove", "readyToPlay", "leaveRoom"].forEach(
+    (eventName) => {
+      socket.on(eventName, (...args) => {
+        // Update activity timestamp
+        playerLastActivity.set(socket.id, Date.now());
+      });
+    }
+  );
 
   socket.on("createRoom", async (callback) => {
     const { roomId } = roomManager.createRoom(socket.id);
@@ -272,6 +319,8 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("disconnect", async () => {
+    playerLastActivity.delete(socket.id);
+
     eventRepository.logEvent({
       eventType: "disconnect",
       socketId: socket.id,
