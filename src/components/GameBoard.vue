@@ -24,6 +24,8 @@ const latestMove = ref({ row: null, col: null });
 const waitingForOpponent = ref(false);
 const opponentReady = ref(false);
 const iAmReady = ref(false);
+const roomCodeCopied = ref(false);
+const linkCopied = ref(false);
 
 const isMyTurn = computed(() => {
   return socket.id === currentTurn.value;
@@ -184,39 +186,31 @@ function makeMove(row, col) {
   });
 }
 
-function copyRoomCode() {
-  navigator.clipboard.writeText(props.roomId)
+function copyToClipboard(text, successFlag) {
+  navigator.clipboard.writeText(text)
     .then(() => {
-      roomCodeCopied.value = true;
+      successFlag.value = true;
       setTimeout(() => {
-        roomCodeCopied.value = false;
-      }, 2000);
+        successFlag.value = false;
+      }, 1500);
     })
     .catch(err => {
-      console.error('Failed to copy room code: ', err);
+      console.error('Failed to copy text: ', err);
     });
 }
 
-const roomCodeCopied = ref(false);
-const linkCopied = ref(false);
+function copyRoomCode() {
+  copyToClipboard(props.roomId, roomCodeCopied);
+}
+
+function copyLink() {
+  copyToClipboard(shareLink.value, linkCopied);
+}
 
 function readyToPlay() {
   socket.emit('readyToPlay', props.roomId);
   waitingForOpponent.value = true;
   statusMessage.value = "Waiting for opponent to play again...";
-}
-
-function copyLink() {
-  navigator.clipboard.writeText(shareLink.value)
-    .then(() => {
-      linkCopied.value = true;
-      setTimeout(() => {
-        linkCopied.value = false;
-      }, 2000);
-    })
-    .catch(err => {
-      console.error('Failed to copy link: ', err);
-    });
 }
 
 function leaveGame() {
