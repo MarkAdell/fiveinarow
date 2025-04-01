@@ -7,9 +7,9 @@ class RoomManager {
     const roomId = this.generateRoomId();
     const room = {
       players: [{ id: creatorId, mark: "X", score: 0 }],
-      board: Array(15)
+      board: Array(13)
         .fill()
-        .map(() => Array(15).fill(null)),
+        .map(() => Array(13).fill(null)),
       currentTurn: creatorId,
       gameStatus: "waiting",
       lastWinner: null,
@@ -48,9 +48,9 @@ class RoomManager {
   }
 
   resetBoard(room) {
-    room.board = Array(15)
+    room.board = Array(13)
       .fill()
-      .map(() => Array(15).fill(null));
+      .map(() => Array(13).fill(null));
 
     // If there was a last winner, they go first
     if (room.lastWinner && room.players.some((p) => p.id === room.lastWinner)) {
