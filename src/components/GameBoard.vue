@@ -231,47 +231,92 @@ function isWinningCell(row, col) {
 }
 
 function setupBackgroundHeartbeat() {
+  // Main visibility change listener
   document.addEventListener('visibilitychange', handleVisibilityChange);
   
-  // Start a simple heartbeat anyway as a fallback
-  heartbeatInterval = setInterval(() => {
-    if (socket.connected) {
-      socket.emit('heartbeat', { roomId: props.roomId });
-    } else {
-      socket.connect();
+  // Additional event listeners for mobile browsers
+  // These help catch app switches that visibilitychange might miss
+  window.addEventListener('blur', () => {
+    console.log('Window blur detected - possible app switch');
+    if (document.hidden) {
+      handleVisibilityChange();
     }
-  }, 5000);
+  });
+  
+  window.addEventListener('pagehide', () => {
+    console.log('Page hide detected - possible app switch');
+    // Force a final heartbeat before potential suspension
+    if (socket.connected) {
+      socket.emit('heartbeat', { 
+        roomId: props.roomId,
+        timestamp: Date.now(),
+        background: true,
+        final: true
+      });
+    }
+  });
+  
+  // Call handleVisibilityChange initially to set up the initial heartbeat
+  handleVisibilityChange();
 }
 
 function handleVisibilityChange() {
-  if (document.hidden) {    
+  if (document.hidden) {
+    console.log('Game went to background, starting aggressive heartbeat');
+    
+    // First clear any existing interval
     if (heartbeatInterval) {
       clearInterval(heartbeatInterval);
     }
-
-    // Start a very frequent heartbeat when in background
+    
+    // Use a much more aggressive interval for background (300ms)
+    // This is necessary for Android when switching to other apps
     heartbeatInterval = setInterval(() => {
       if (socket.connected) {
-        socket.emit('heartbeat', { roomId: props.roomId });
+        socket.emit('heartbeat', { 
+          roomId: props.roomId,
+          timestamp: Date.now(),
+          background: true
+        });
+      } else {
+        console.log('Socket disconnected in background, reconnecting...');
+        socket.connect();
+      }
+    }, 300); // Ultra aggressive for mobile app switching
+  } else {
+    console.log('Game returned to foreground');
+    
+    // Clear the aggressive interval
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+    }
+    
+    // Use a more moderate interval for foreground
+    heartbeatInterval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit('heartbeat', { 
+          roomId: props.roomId,
+          timestamp: Date.now(),
+          background: false
+        });
       } else {
         socket.connect();
       }
-    }, 1000);
-  } else {
-    if (heartbeatInterval) {
-      clearInterval(heartbeatInterval);
-      heartbeatInterval = null;
-    }
+    }, 5000); // Every 5 seconds in foreground is fine
   }
 }
 
 function cleanupHeartbeat() {
+  // Clear any active heartbeat interval
   if (heartbeatInterval) {
     clearInterval(heartbeatInterval);
     heartbeatInterval = null;
   }
   
+  // Remove all event listeners
   document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('blur', handleVisibilityChange);
+  window.removeEventListener('pagehide', handleVisibilityChange);
 }
 </script>
 
