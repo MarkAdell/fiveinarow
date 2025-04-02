@@ -34,6 +34,8 @@ initDatabase();
 // Track last activity time for each player
 const playerLastActivity = new Map(); // socketId -> timestamp
 
+const DEBUG_HEARTBEATS = process.env.DEBUG_HEARTBEATS === "true";
+
 // Disconnect inactive players after 5 minutes
 function setupInactivityCheck() {
   const INACTIVITY_TIMEOUT_MS = 300000;
@@ -117,10 +119,29 @@ io.on("connection", async (socket) => {
     if (roomId) {
       const room = roomManager.getRoom(roomId);
       if (room) {
+        // Refresh socket's presence in the room
         socket.join(roomId);
 
+        // Make sure this player is still in the room's player list
+        const playerInRoom = room.players.find((p) => p.id === socket.id);
+        if (!playerInRoom) {
+          if (DEBUG_HEARTBEATS) {
+            console.log(
+              `Player ${socket.id} sending heartbeats but not in room ${roomId}, potential reconnection issue`
+            );
+          }
+        }
+
         // Send a minimal response to keep the connection active
-        socket.emit("heartbeatAck");
+        socket.emit("heartbeatAck", { timestamp: Date.now() });
+
+        if (DEBUG_HEARTBEATS) {
+          console.log(`Heartbeat received from ${socket.id} in room ${roomId}`);
+        }
+      } else {
+        if (DEBUG_HEARTBEATS) {
+          console.log(`Heartbeat received for non-existent room: ${roomId}`);
+        }
       }
     }
   });

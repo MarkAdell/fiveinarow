@@ -9,10 +9,12 @@ const socketUrl = import.meta.env.DEV
 
 const socket = io(socketUrl, {
   reconnectionAttempts: 10,
-  reconnectionDelay: 1000,
-  timeout: 60000, // Longer timeout (60 seconds)
-  pingInterval: 10000, // Send a ping every 10 seconds
-  pingTimeout: 30000, // Wait 30 seconds for a ping response
+  reconnectionDelay: 500,
+  reconnectionDelayMax: 2000,
+  timeout: 20000,
+  pingInterval: 2000,
+  pingTimeout: 10000,
+  forceNew: false,
   autoConnect: true,
 });
 
@@ -58,6 +60,25 @@ if (typeof document !== "undefined") {
     },
     { once: true }
   );
+
+  if ("wakeLock" in navigator) {
+    let wakeLock = null;
+
+    const requestWakeLock = async () => {
+      try {
+        wakeLock = await navigator.wakeLock.request("screen");
+      } catch (err) {
+        console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+      }
+    };
+
+    // Request wake lock when the page becomes visible
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && !wakeLock) {
+        requestWakeLock();
+      }
+    });
+  }
 }
 
 const app = createApp(App);

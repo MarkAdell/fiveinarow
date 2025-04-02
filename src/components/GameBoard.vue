@@ -39,6 +39,8 @@ const scores = computed(() => {
   return result;
 });
 
+let heartbeatInterval = null;
+
 onMounted(() => {
   shareLink.value = `${window.location.origin}?room=${props.roomId}`;
 
@@ -53,30 +55,7 @@ onMounted(() => {
   }
 
   setupSocketListeners();
-  
-  // Setup page visibility event listener to help maintain connection
-  let heartbeatInterval;
-  
-  // Use a heartbeat strategy when in background
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-      
-      if (heartbeatInterval) clearInterval(heartbeatInterval);
-      
-      heartbeatInterval = setInterval(() => {
-        if (socket.connected) {
-          socket.emit('heartbeat', { roomId: props.roomId });
-        } else {
-          socket.connect();
-        }
-      }, 3000);
-    } else {
-      if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-      }
-    }
-  });
+  setupBackgroundHeartbeat();
   
   // Clean up socket listeners when component is unmounted
   return () => {
@@ -87,12 +66,8 @@ onMounted(() => {
     socket.off('gameReset');
     socket.off('opponentLeft');
     socket.off('playerReady');
-  
-    if (heartbeatInterval) {
-      clearInterval(heartbeatInterval);
-    }
     
-    document.removeEventListener('visibilitychange', () => {});
+    cleanupHeartbeat();
   };
 });
 
@@ -253,6 +228,50 @@ function leaveGame() {
 
 function isWinningCell(row, col) {
   return winLine.value.some(cell => cell.row === row && cell.col === col);
+}
+
+function setupBackgroundHeartbeat() {
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  // Start a simple heartbeat anyway as a fallback
+  heartbeatInterval = setInterval(() => {
+    if (socket.connected) {
+      socket.emit('heartbeat', { roomId: props.roomId });
+    } else {
+      socket.connect();
+    }
+  }, 5000);
+}
+
+function handleVisibilityChange() {
+  if (document.hidden) {    
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+    }
+
+    // Start a very frequent heartbeat when in background
+    heartbeatInterval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit('heartbeat', { roomId: props.roomId });
+      } else {
+        socket.connect();
+      }
+    }, 1000);
+  } else {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+  }
+}
+
+function cleanupHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+  
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 }
 </script>
 
